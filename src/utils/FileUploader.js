@@ -15,7 +15,8 @@ const uploadFile = async (localFilePath) => {
       resource_type: "auto",
     });
     // File Upload Successfully
-    console.log("File has been uploaded: ", response.url);
+    // console.log("File has been uploaded:", response.url);
+    fs.unlinkSync(localFilePath)
     return response;
   } catch (error) {
     // File not uploaded (So we remove locally saved temporary file)

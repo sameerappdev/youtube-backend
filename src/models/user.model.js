@@ -29,7 +29,7 @@ const userSchema = new Schema(
       type: String, // Cloudinary URL
       required: true,
     },
-    profileImage: {
+    coverImage: {
       type: String, // Cloudinary URL
     },
     watchHistory: [
@@ -53,7 +53,7 @@ const userSchema = new Schema(
 
 // save, validate, remove, updateOne, deleteOne all are the methods
 userSchema.pre("save", async function(next) {
-  if(this.isModified('password')) return next() // Used to check if password is changed otherwise it will change password all the time
+  if(!this.isModified('password')) return next(); // Used to check if password is changed otherwise it will change password all the time
   
   this.password = await bcrypt.hash(this.password, 10) // 10 is the hash round here and bcrypt is using for encoding password
   next()
