@@ -55,7 +55,7 @@ const userSchema = new Schema(
 userSchema.pre("save", async function(next) {
   if(this.isModified('password')) return next() // Used to check if password is changed otherwise it will change password all the time
   
-  this.password = bcrypt.hash(this.password, 10) // 10 is the hash round here and bcrypt is using for encoding password
+  this.password = await bcrypt.hash(this.password, 10) // 10 is the hash round here and bcrypt is using for encoding password
   next()
 })
 
