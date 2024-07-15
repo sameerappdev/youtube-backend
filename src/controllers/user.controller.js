@@ -5,6 +5,26 @@ import { User } from "../models/user.model.js";
 import { uploadFile } from "../utils/FileUploader.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+const generateAccessandRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // Saving refreshToken in user data without any validation
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    // Returning Tokens
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating access and refresh token"
+    );
+  }
+};
+
 const createUser = asyncHandler(async (req, res) => {
   // GET user detail from FE
   // Validation of Body Data
@@ -82,4 +102,90 @@ const createUser = asyncHandler(async (req, res) => {
     );
 });
 
-export { createUser };
+const loginUser = asyncHandler(async (req, res) => {
+  // Get email and password from user from body
+  // req body -> data
+  // find user via data
+  // check password
+  // generate access and refresh token
+  // send data in cookies
+
+  const { email, username, password } = req.body;
+
+  if (!(username || email)) {
+    throw new Error(400, "Username or email is required");
+  }
+
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!user) {
+    throw new Error(404, "User does not exit");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new Error(404, "Invalid user credentials");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
+    user._id
+  );
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  // Send Cookies
+  // Cookies can be modified by default from the FE but by sending httpOnly and secure to true it can be only modified from the server
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken)
+    .json(
+      new ApiResponse(
+        200,
+        "User has been logged in successfully",
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        }
+      )
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true, // By this the new response will be the updated value after the refreshToken removal
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  
+  // Clearing cookies and sending response
+  return res
+    .status(200)
+    .clearCookies("accessToken", options)
+    .clearCookies("refreshToken", options)
+    .json(new ApiResponse(200, "User has been logged out successfully"));
+});
+
+export { createUser, loginUser, logoutUser };

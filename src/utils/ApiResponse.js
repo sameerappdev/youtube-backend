@@ -1,5 +1,5 @@
 class ApiResponse {
-  constructor(statusCode, data, message = "Success") {
+  constructor(statusCode, message = "Success", data) {
     // this.statusCode = statusCode;
     this.success = statusCode < 400; // Status Code should be less than 400 bcz 400 is Client Error and 500 is Server Error
     this.message = message;
