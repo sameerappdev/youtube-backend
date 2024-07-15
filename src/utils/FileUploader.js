@@ -25,4 +25,17 @@ const uploadFile = async (localFilePath) => {
   }
 };
 
-export {uploadFile}
+// Clean Up function to remove temp files
+const cleanUpTempFiles = (filePaths) => {
+  filePaths.forEach((filePath) => {
+    if (filePath) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.error(`Error removing temp file (${filePath}):`, err);
+      }
+    }
+  });
+};
+
+export {uploadFile,cleanUpTempFiles}
