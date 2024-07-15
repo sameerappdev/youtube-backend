@@ -24,7 +24,7 @@ const createUser = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError(400, "All fields are required");
   } else if (!validateEmail(email)) {
-    throw new ApiError(400, "Email is not valid");
+    throw new ApiError(400, "Please enter a valid email");
   }
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
